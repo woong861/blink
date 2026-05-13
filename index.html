@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Blink — 설렘,스물</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#FF6B9D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --pink:#FF6B9D; --pink-light:#FFB3CC; --pink-pale:#FFF0F5;
+    --purple:#8B5CF6; --purple-light:#C4B5FD; --purple-pale:#F5F3FF;
+    --bg:#FFF8FC; --text:#1C0A16; --text-muted:#9B6B80;
+    --border:rgba(255,107,157,0.2);
+    --radius:16px; --radius-sm:10px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family: -apple-system, 'Gowun Dodum', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  body::before {
+    content:''; position:fixed; top:-30%; right:-20%;
+    width:70vw; height:70vw;
+    background:radial-gradient(circle, rgba(255,107,157,0.12) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  body::after {
+    content:''; position:fixed; bottom:-20%; left:-20%;
+    width:60vw; height:60vw;
+    background:radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+    pointer-events:none;
+  }
+
+  .wrap { width:100%; max-width:400px; position:relative; z-index:1; }
+
+  /* 로고 */
+  .logo-wrap { text-align:center; margin-bottom:40px; }
+  .logo {
+    font-size:48px; font-weight:800; letter-spacing:-2px;
+    background: linear-gradient(135deg, #FF6B9D 0%, #8B5CF6 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    display:block; margin-bottom:6px;
+  }
+  .logo-sub { font-size:14px; color:var(--text-muted); letter-spacing:1px; }
+
+  /* 탭 */
+  .tabs {
+    display:flex; background:rgba(255,107,157,0.08);
+    border-radius:50px; padding:4px; margin-bottom:28px;
+  }
+  .tab {
+    flex:1; padding:10px; border:none; background:none;
+    border-radius:50px; font-size:14px; font-weight:600;
+    color:var(--text-muted); cursor:pointer; transition:all .2s;
+  }
+  .tab.active {
+    background:white; color:var(--pink);
+    box-shadow:0 2px 12px rgba(255,107,157,0.2);
+  }
+
+  /* 폼 */
+  .form { display:flex; flex-direction:column; gap:14px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-label { font-size:13px; font-weight:600; color:var(--text-muted); padding-left:4px; }
+  .form-input {
+    padding:14px 16px; border-radius:var(--radius-sm);
+    border:1.5px solid var(--border); background:white;
+    font-size:15px; color:var(--text); outline:none;
+    transition:all .2s; font-family:inherit;
+  }
+  .form-input:focus { border-color:var(--pink); box-shadow:0 0 0 3px rgba(255,107,157,0.1); }
+  .form-input::placeholder { color:#CCC; }
+
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  select.form-input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239B6B80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+
+  /* 버튼 */
+  .btn-primary {
+    padding:15px; border-radius:50px; border:none;
+    background:linear-gradient(135deg, var(--pink), var(--purple));
+    color:white; font-size:16px; font-weight:700;
+    cursor:pointer; transition:all .2s; margin-top:4px;
+    box-shadow:0 6px 20px rgba(255,107,157,0.35);
+    font-family:inherit; letter-spacing:0.3px;
+  }
+  .btn-primary:active { transform:scale(0.98); }
+  .btn-primary:disabled { opacity:0.6; cursor:not-allowed; }
+
+  /* 구분선 */
+  .divider {
+    display:flex; align-items:center; gap:12px;
+    margin:4px 0; color:var(--text-muted); font-size:13px;
+  }
+  .divider::before, .divider::after {
+    content:''; flex:1; height:1px; background:var(--border);
+  }
+
+  /* 소셜 로그인 */
+  .btn-social {
+    padding:13px; border-radius:var(--radius-sm);
+    border:1.5px solid var(--border); background:white;
+    font-size:14px; font-weight:600; color:var(--text);
+    cursor:pointer; transition:all .2s; display:flex;
+    align-items:center; justify-content:center; gap:10px;
+    font-family:inherit;
+  }
+  .btn-social:active { background:#f9f9f9; }
+
+  /* 메시지 */
+  .msg { padding:12px 16px; border-radius:var(--radius-sm); font-size:13px; margin-top:4px; text-align:center; display:none; }
+  .msg.error { background:#FFF0F0; color:#CC3333; border:1px solid #FFCCCC; display:block; }
+  .msg.success { background:#F0FFF4; color:#1A7A3C; border:1px solid #B2F0C8; display:block; }
+
+  /* 패널 숨기기 */
+  .panel { display:none; }
+  .panel.active { display:flex; flex-direction:column; }
+
+  /* 약관 */
+  .terms { font-size:12px; color:var(--text-muted); text-align:center; line-height:1.6; margin-top:8px; }
+  .terms a { color:var(--pink); text-decoration:none; }
+
+  /* 로딩 스피너 */
+  .spinner {
+    width:20px; height:20px; border:2px solid rgba(255,255,255,0.4);
+    border-top-color:white; border-radius:50%;
+    animation:spin .6s linear infinite; display:inline-block;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 로고 -->
+  <div class="logo-wrap">
+    <span class="logo">Blink ✨</span>
+    <span class="logo-sub">설렘,스물 · 대학생 인연찾기</span>
+  </div>
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('login')">로그인</button>
+    <button class="tab" onclick="switchTab('signup')">회원가입</button>
+  </div>
+
+  <!-- 로그인 패널 -->
+  <div id="loginPanel" class="panel active">
+    <div class="form">
+      <div class="form-group">
+        <label class="form-label">이메일</label>
+        <input type="email" id="loginEmail" class="form-input" placeholder="이메일 입력" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비밀번호</label>
+        <input type="password" id="loginPw" class="form-input" placeholder="비밀번호 입력" autocomplete="current-password">
+      </div>
+      <div id="loginMsg" class="msg"></div>
+      <button class="btn-primary" onclick="login()">로그인</button>
+    </div>
+    <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:20px;">
+      비밀번호를 잊으셨나요? <a href="#" onclick="resetPw()" style="color:var(--pink);text-decoration:none;">재설정</a>
+    </p>
+  </div>
+
+  <!-- 회원가입 패널 -->
+  <div id="signupPanel" class="panel">
+    <div class="form">
+      <div class="form-group">
+        <label class="form-label">이메일</label>
+        <input type="email" id="signupEmail" class="form-input" placeholder="이메일 입력" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비밀번호</label>
+        <input type="password" id="signupPw" class="form-input" placeholder="8자 이상" autocomplete="new-password">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">이름</label>
+          <input type="text" id="signupName" class="form-input" placeholder="실명">
+        </div>
+        <div class="form-group">
+          <label class="form-label">성별</label>
+          <select id="signupGender" class="form-input">
+            <option value="">선택</option>
+            <option value="남성">남성</option>
+            <option value="여성">여성</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">학교</label>
+        <input type="text" id="signupSchool" class="form-input" placeholder="재학 중인 학교">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">학과</label>
+          <input type="text" id="signupDept" class="form-input" placeholder="학과">
+        </div>
+        <div class="form-group">
+          <label class="form-label">나이</label>
+          <input type="number" id="signupAge" class="form-input" placeholder="나이" min="18" max="30">
+        </div>
+      </div>
+      <div id="signupMsg" class="msg"></div>
+      <button class="btn-primary" onclick="signup()">가입하기</button>
+      <p class="terms">가입하면 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하는 것으로 간주됩니다</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Supabase 초기화
+const SUPABASE_URL = 'https://qnvmxvqqkazynsvjshvh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_b7UCSfhHt6LhJ15zZT1h7g_BxkdFIJv';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 이미 로그인된 경우 홈으로
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = 'home.html';
+});
+
+// 탭 전환
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+  document.getElementById('loginPanel').classList.toggle('active', tab==='login');
+  document.getElementById('signupPanel').classList.toggle('active', tab==='signup');
+}
+
+// 로그인
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  const msg = document.getElementById('loginMsg');
+  const btn = event.target;
+
+  if (!email || !pw) { showMsg(msg, '이메일과 비밀번호를 입력해주세요', 'error'); return; }
+
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+
+  if (error) {
+    showMsg(msg, '이메일 또는 비밀번호가 올바르지 않아요', 'error');
+    btn.innerHTML = '로그인';
+    btn.disabled = false;
+  } else {
+    window.location.href = 'home.html';
+  }
+}
+
+// 회원가입
+async function signup() {
+  const email = document.getElementById('signupEmail').value.trim();
+  const pw = document.getElementById('signupPw').value;
+  const name = document.getElementById('signupName').value.trim();
+  const gender = document.getElementById('signupGender').value;
+  const school = document.getElementById('signupSchool').value.trim();
+  const dept = document.getElementById('signupDept').value.trim();
+  const age = parseInt(document.getElementById('signupAge').value);
+  const msg = document.getElementById('signupMsg');
+  const btn = event.target;
+
+  if (!email || !pw || !name || !gender || !school) {
+    showMsg(msg, '모든 항목을 입력해주세요', 'error'); return;
+  }
+  if (pw.length < 8) {
+    showMsg(msg, '비밀번호는 8자 이상이어야 해요', 'error'); return;
+  }
+
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  const { data, error } = await supabase.auth.signUp({ email, password: pw });
+
+  if (error) {
+    showMsg(msg, error.message.includes('already') ? '이미 사용 중인 이메일이에요' : '가입 중 오류가 발생했어요', 'error');
+    btn.innerHTML = '가입하기';
+    btn.disabled = false;
+    return;
+  }
+
+  // 프로필 생성
+  const { error: profileError } = await supabase.from('profiles').insert({
+    id: data.user.id,
+    name, gender, school,
+    department: dept,
+    age: age || null,
+    is_approved: false
+  });
+
+  if (profileError) {
+    showMsg(msg, '프로필 생성 중 오류가 발생했어요', 'error');
+    btn.innerHTML = '가입하기';
+    btn.disabled = false;
+    return;
+  }
+
+  showMsg(msg, '가입 완료! 이메일 인증 후 프로필을 완성해주세요 💌', 'success');
+  btn.innerHTML = '가입하기';
+  btn.disabled = false;
+
+  setTimeout(() => {
+    window.location.href = 'profile.html';
+  }, 2000);
+}
+
+// 비밀번호 재설정
+async function resetPw() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) { alert('이메일을 먼저 입력해주세요'); return; }
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  if (!error) alert('비밀번호 재설정 이메일을 보냈어요!');
+}
+
+function showMsg(el, text, type) {
+  el.textContent = text;
+  el.className = 'msg ' + type;
+}
+
+// 엔터키 처리
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const loginActive = document.getElementById('loginPanel').classList.contains('active');
+    if (loginActive) login();
+    else signup();
+  }
+});
+</script>
+</body>
+</html>
