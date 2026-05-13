@@ -5,293 +5,273 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Blink — 채팅</title>
 <link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#FF6B9D">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --pink:#FF6B9D; --pink-light:#FFB3CC; --pink-pale:#FFF0F5;
-    --purple:#8B5CF6; --purple-light:#C4B5FD; --purple-pale:#F5F3FF;
-    --bg:#FFF8FC; --text:#1C0A16; --text-muted:#9B6B80;
-    --border:rgba(255,107,157,0.18); --nav-h:70px;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { font-family:-apple-system,sans-serif; background:var(--bg); min-height:100vh; }
+:root{
+  --pink:#FF6B9D;--pink-light:#FFB3CC;--pink-pale:#FFF0F5;
+  --purple:#8B5CF6;--purple-light:#C4B5FD;--purple-pale:#F5F3FF;
+  --bg:#FFF8FC;--text:#1C0A16;--muted:#9B6B80;
+  --border:rgba(255,107,157,0.18);--nav:70px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Gowun Dodum',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);}
 
-  .header { position:fixed; top:0; left:0; right:0; height:60px; background:rgba(255,248,252,0.95); backdrop-filter:blur(10px); z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 20px; border-bottom:1px solid var(--border); }
-  .header-title { font-size:17px; font-weight:700; color:var(--text); }
-  .back-btn { background:none; border:none; font-size:20px; cursor:pointer; padding:4px; }
+.hd{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(255,248,252,.97);backdrop-filter:blur(12px);z-index:100;display:flex;align-items:center;padding:0 18px;border-bottom:1px solid var(--border);}
+.hd-title{font-size:17px;font-weight:700;}
+.back-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px;color:var(--text);}
 
-  /* 매칭 목록 */
-  .match-list { padding:76px 0 calc(var(--nav-h) + 20px); }
-  .match-item { display:flex; align-items:center; gap:14px; padding:16px 20px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; background:white; }
-  .match-item:first-child { margin-top:8px; }
-  .match-item:active { background:var(--pink-pale); }
-  .match-avatar { width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid var(--pink-light); flex-shrink:0; background:var(--pink-pale); display:flex; align-items:center; justify-content:center; font-size:24px; }
-  .match-avatar img { width:54px; height:54px; border-radius:50%; object-fit:cover; }
-  .match-info { flex:1; min-width:0; }
-  .match-name { font-size:15px; font-weight:700; color:var(--text); margin-bottom:3px; }
-  .match-last-msg { font-size:13px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .match-meta { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
-  .match-time { font-size:11px; color:var(--text-muted); }
-  .unread-badge { background:var(--pink); color:white; border-radius:50px; padding:2px 8px; font-size:11px; font-weight:700; }
+.match-list{padding:72px 0 calc(var(--nav) + 20px);}
+.mitem{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;background:white;}
+.mitem:active{background:var(--pink-pale);}
+.mavt{width:52px;height:52px;border-radius:50%;background:var(--pink-pale);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:2px solid var(--pink-light);overflow:hidden;}
+.mavt img{width:52px;height:52px;border-radius:50%;object-fit:cover;}
+.minfo{flex:1;min-width:0;}
+.mname{font-size:15px;font-weight:700;margin-bottom:3px;}
+.mlast{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mmeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.mtime{font-size:11px;color:var(--muted);}
+.unread{background:var(--pink);color:white;border-radius:50px;padding:2px 8px;font-size:10px;font-weight:700;}
 
-  /* 빈 상태 */
-  .empty { display:none; text-align:center; padding:80px 20px; }
-  .empty.visible { display:block; }
-  .empty-emoji { font-size:56px; margin-bottom:16px; }
-  .empty-title { font-size:18px; font-weight:700; color:var(--text); margin-bottom:8px; }
-  .empty-sub { font-size:14px; color:var(--text-muted); line-height:1.6; }
-  .btn-go-home { margin-top:20px; padding:14px 32px; background:linear-gradient(135deg,var(--pink),var(--purple)); color:white; border:none; border-radius:50px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; }
+.empty{display:none;text-align:center;padding:80px 20px;}
+.empty.visible{display:block;}
+.empty-emoji{font-size:50px;margin-bottom:14px;}
+.empty-title{font-size:17px;font-weight:700;margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--muted);line-height:1.6;}
+.btn-go{margin-top:18px;padding:12px 28px;background:linear-gradient(135deg,var(--pink),var(--purple));color:white;border:none;border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
 
-  /* 채팅방 */
-  .chatroom { display:none; position:fixed; inset:0; background:var(--bg); z-index:200; flex-direction:column; }
-  .chatroom.visible { display:flex; }
-  .chat-header { height:60px; background:rgba(255,248,252,0.97); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; padding:0 16px; flex-shrink:0; }
-  .chat-avatar { width:38px; height:38px; border-radius:50%; background:var(--pink-pale); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; overflow:hidden; }
-  .chat-avatar img { width:38px; height:38px; object-fit:cover; border-radius:50%; }
-  .chat-partner-name { font-size:16px; font-weight:700; color:var(--text); }
-  .chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
-  .msg-wrap { display:flex; align-items:flex-end; gap:8px; }
-  .msg-wrap.mine { flex-direction:row-reverse; }
-  .msg-bubble { max-width:70%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.5; word-break:break-word; }
-  .msg-bubble.theirs { background:white; color:var(--text); border:1px solid var(--border); border-bottom-left-radius:4px; }
-  .msg-bubble.mine { background:linear-gradient(135deg,var(--pink),var(--purple)); color:white; border-bottom-right-radius:4px; }
-  .msg-time { font-size:10px; color:var(--text-muted); flex-shrink:0; }
-  .chat-input-wrap { padding:12px 16px; background:rgba(255,248,252,0.97); border-top:1px solid var(--border); display:flex; gap:10px; align-items:flex-end; padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
-  .chat-input { flex:1; padding:10px 14px; border-radius:22px; border:1.5px solid var(--border); background:white; font-size:15px; outline:none; font-family:inherit; resize:none; max-height:100px; line-height:1.5; }
-  .chat-input:focus { border-color:var(--pink); }
-  .send-btn { width:42px; height:42px; background:linear-gradient(135deg,var(--pink),var(--purple)); border:none; border-radius:50%; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .send-btn:active { transform:scale(0.9); }
+/* 채팅방 */
+.chatroom{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;flex-direction:column;}
+.chatroom.visible{display:flex;}
+.chat-hd{height:56px;background:rgba(255,248,252,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 14px;flex-shrink:0;}
+.chat-avt{width:36px;height:36px;border-radius:50%;background:var(--pink-pale);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;flex-shrink:0;}
+.chat-avt img{width:36px;height:36px;object-fit:cover;border-radius:50%;}
+.chat-pname{font-size:15px;font-weight:700;}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;}
+.mw{display:flex;align-items:flex-end;gap:6px;}
+.mw.mine{flex-direction:row-reverse;}
+.bub{max-width:72%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.5;word-break:break-word;}
+.bub.theirs{background:white;border:1px solid var(--border);border-bottom-left-radius:4px;}
+.bub.mine{background:linear-gradient(135deg,var(--pink),var(--purple));color:white;border-bottom-right-radius:4px;}
+.mt{font-size:10px;color:var(--muted);flex-shrink:0;}
+.chat-in{padding:10px 14px;background:rgba(255,248,252,.97);border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;padding-bottom:calc(10px + env(safe-area-inset-bottom));}
+.chat-input{flex:1;padding:10px 14px;border-radius:20px;border:1.5px solid var(--border);background:white;font-size:14px;outline:none;font-family:inherit;resize:none;max-height:80px;line-height:1.5;}
+.chat-input:focus{border-color:var(--pink);}
+.send-btn{width:38px;height:38px;background:linear-gradient(135deg,var(--pink),var(--purple));border:none;border-radius:50%;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 
-  /* 네비 */
-  .nav { position:fixed; bottom:0; left:0; right:0; height:var(--nav-h); background:rgba(255,248,252,0.97); backdrop-filter:blur(10px); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-around; padding-bottom:env(safe-area-inset-bottom); z-index:100; }
-  .nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 20px; border:none; background:none; cursor:pointer; color:var(--text-muted); font-size:10px; font-family:inherit; }
-  .nav-item.active { color:var(--pink); }
-  .nav-icon { font-size:22px; }
+.loading-txt{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
 
-  .loading-text { text-align:center; padding:40px; color:var(--text-muted); font-size:14px; }
+.nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav);background:rgba(255,248,252,.97);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom);z-index:100;}
+.nv{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;border:none;background:none;cursor:pointer;color:var(--muted);font-size:10px;font-family:inherit;position:relative;}
+.nv.on{color:var(--pink);}
+.nv-icon{font-size:21px;}
+.nv-badge{position:absolute;top:2px;right:8px;min-width:14px;height:14px;background:var(--pink);border-radius:50px;font-size:9px;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;padding:0 3px;}
 </style>
 </head>
 <body>
 
-<!-- 매칭 목록 -->
-<div class="header">
-  <div class="header-title">💬 채팅</div>
+<div class="hd">
+  <div class="hd-title">💬 채팅</div>
 </div>
 
 <div id="listView">
-  <div id="loadingText" class="loading-text">불러오는 중...</div>
+  <div id="loadingText" class="loading-txt">불러오는 중...</div>
   <div class="match-list" id="matchList"></div>
   <div class="empty" id="emptyState">
     <div class="empty-emoji">💌</div>
     <div class="empty-title">아직 매칭이 없어요</div>
-    <div class="empty-sub">카드를 둘러보고<br>마음에 드는 분에게 좋아요를 눌러보세요!</div>
-    <button class="btn-go-home" onclick="location.href='home.html'">카드 보러가기</button>
+    <div class="empty-sub">호감을 주고 받으면<br>여기서 대화할 수 있어요!</div>
+    <button class="btn-go" onclick="location.href='home.html'">카드 보러가기</button>
   </div>
 </div>
 
 <!-- 채팅방 -->
 <div class="chatroom" id="chatroom">
-  <div class="chat-header">
+  <div class="chat-hd">
     <button class="back-btn" onclick="closeChat()">←</button>
-    <div class="chat-avatar" id="chatAvatar">👤</div>
-    <div class="chat-partner-name" id="chatPartnerName"></div>
+    <div class="chat-avt" id="chatAvatar">👤</div>
+    <div class="chat-pname" id="chatPartner"></div>
   </div>
-  <div class="chat-messages" id="chatMessages"></div>
-  <div class="chat-input-wrap">
-    <textarea class="chat-input" id="chatInput" placeholder="메시지 입력..." rows="1" onkeydown="handleKey(event)"></textarea>
-    <button class="send-btn" onclick="sendMessage()">➤</button>
+  <div class="chat-msgs" id="chatMessages"></div>
+  <div class="chat-in">
+    <textarea class="chat-input" id="chatInput" placeholder="메시지 입력..." rows="1" onkeydown="hKey(event)"></textarea>
+    <button class="send-btn" onclick="sendMsg()">➤</button>
   </div>
 </div>
 
-<!-- 네비 -->
 <div class="nav" id="mainNav">
-  <button class="nav-item" onclick="location.href='home.html'"><span class="nav-icon">🏠</span><span>홈</span></button>
-  <button class="nav-item active" onclick="location.href='chat.html'"><span class="nav-icon">💬</span><span>채팅</span></button>
-  <button class="nav-item" onclick="location.href='profile.html'"><span class="nav-icon">👤</span><span>프로필</span></button>
+  <button class="nv" onclick="location.href='home.html'"><span class="nv-icon">🏠</span><span>홈</span></button>
+  <button class="nv" onclick="location.href='likes.html'">
+    <span class="nv-icon">💗</span><span>호감</span>
+    <span class="nv-badge" id="navLikeBadge" style="display:none">0</span>
+  </button>
+  <button class="nv on" onclick="location.href='chat.html'"><span class="nv-icon">💬</span><span>채팅</span></button>
+  <button class="nv" onclick="location.href='profile.html'"><span class="nv-icon">👤</span><span>프로필</span></button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-const SUPABASE_URL = 'https://qnvmxvqqkazynsvjshvh.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_b7UCSfhHt6LhJ15zZT1h7g_BxkdFIJv';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var SB_URL='https://qnvmxvqqkazynsvjshvh.supabase.co';
+var SB_KEY='sb_publishable_b7UCSfhHt6LhJ15zZT1h7g_BxkdFIJv';
+var sb=supabase.createClient(SB_URL,SB_KEY);
+var me=null,currentMatchId=null,rtCh=null;
 
-let currentUser = null;
-let currentMatchId = null;
-let realtimeChannel = null;
-
-async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
-  currentUser = session.user;
-
+async function init(){
+  var r=await sb.auth.getSession();
+  if(!r.data.session){window.location.href='index.html';return;}
+  me=r.data.session.user;
   await loadMatches();
-
-  // URL 파라미터로 바로 채팅방 열기
-  const params = new URLSearchParams(window.location.search);
-  const matchId = params.get('match');
-  if (matchId) openChat(matchId);
+  updateBadge();
+  var p=new URLSearchParams(window.location.search);
+  var mid=p.get('match');
+  if(mid) openChat(mid);
 }
 
-async function loadMatches() {
-  const { data: matches } = await sb.from('matches')
-    .select('*')
-    .or('user1.eq.' + currentUser.id + ',user2.eq.' + currentUser.id)
-    .order('created_at', { ascending: false });
+async function loadMatches(){
+  var r=await sb.from('matches').select('*')
+    .or('user1.eq.'+me.id+',user2.eq.'+me.id)
+    .order('created_at',{ascending:false});
 
-  document.getElementById('loadingText').style.display = 'none';
+  document.getElementById('loadingText').style.display='none';
 
-  if (!matches || matches.length === 0) {
+  if(!r.data||r.data.length===0){
     document.getElementById('emptyState').classList.add('visible');
     return;
   }
 
-  const list = document.getElementById('matchList');
-  list.innerHTML = '';
+  var list=document.getElementById('matchList');
+  list.innerHTML='';
 
-  for (const match of matches) {
-    const partnerId = match.user1 === currentUser.id ? match.user2 : match.user1;
-    const { data: partner } = await sb.from('profiles').select('*').eq('id', partnerId).single();
-    const { data: lastMsgs } = await sb.from('messages')
-      .select('*').eq('match_id', match.id)
-      .order('created_at', { ascending: false }).limit(1);
-    const lastMsg = lastMsgs?.[0];
+  for(var i=0;i<r.data.length;i++){
+    var m=r.data[i];
+    var pid=m.user1===me.id?m.user2:m.user1;
+    var pr=await sb.from('profiles').select('*').eq('id',pid).single();
+    if(!pr.data) continue;
+    var p=pr.data;
 
-    const { count: unread } = await sb.from('messages')
-      .select('*', { count:'exact', head:true })
-      .eq('match_id', match.id).eq('is_read', false)
-      .neq('sender_id', currentUser.id);
+    var lr=await sb.from('messages').select('*').eq('match_id',m.id)
+      .order('created_at',{ascending:false}).limit(1);
+    var last=(lr.data||[])[0];
 
-    const avatarHtml = partner?.photo_url
-      ? '<img src="' + partner.photo_url + '" alt="">'
-      : (partner?.gender === '여성' ? '👩' : '👨');
+    var ur=await sb.from('messages').select('*',{count:'exact',head:true})
+      .eq('match_id',m.id).eq('is_read',false).neq('sender_id',me.id);
+    var unread=ur.count||0;
 
-    const time = lastMsg ? formatTime(lastMsg.created_at) : formatTime(match.created_at);
+    var avatarH=p.photo_url?'<img src="'+p.photo_url+'">':(p.gender==='여성'?'👩':'👨');
+    var time=last?formatTime(last.created_at):formatTime(m.created_at);
 
-    const item = document.createElement('div');
-    item.className = 'match-item';
-    item.onclick = () => openChat(match.id, partner);
-    item.innerHTML =
-      '<div class="match-avatar">' + avatarHtml + '</div>' +
-      '<div class="match-info">' +
-        '<div class="match-name">' + escH(partner?.name || '알 수 없음') + '</div>' +
-        '<div class="match-last-msg">' + escH(lastMsg?.content || '매칭됐어요! 대화를 시작해보세요 💕') + '</div>' +
-      '</div>' +
-      '<div class="match-meta">' +
-        '<div class="match-time">' + time + '</div>' +
-        (unread > 0 ? '<div class="unread-badge">' + unread + '</div>' : '') +
-      '</div>';
-    list.appendChild(item);
+    (function(matchId,profile){
+      var item=document.createElement('div');
+      item.className='mitem';
+      item.onclick=function(){openChat(matchId,profile);};
+      item.innerHTML=
+        '<div class="mavt">'+avatarH+'</div>'
+        +'<div class="minfo">'
+        +'<div class="mname">'+escH(profile.nickname||profile.name||'익명')+'</div>'
+        +'<div class="mlast">'+escH(last?last.content:'매칭됐어요! 대화를 시작해보세요 💕')+'</div>'
+        +'</div>'
+        +'<div class="mmeta">'
+        +'<div class="mtime">'+time+'</div>'
+        +(unread>0?'<div class="unread">'+unread+'</div>':'')
+        +'</div>';
+      list.appendChild(item);
+    })(m.id,p);
   }
 }
 
-async function openChat(matchId, partner) {
-  currentMatchId = matchId;
-
-  // 파트너 정보 로드
-  if (!partner) {
-    const { data: match } = await sb.from('matches').select('*').eq('id', matchId).single();
-    if (match) {
-      const partnerId = match.user1 === currentUser.id ? match.user2 : match.user1;
-      const { data: p } = await sb.from('profiles').select('*').eq('id', partnerId).single();
-      partner = p;
+async function openChat(matchId,partner){
+  currentMatchId=matchId;
+  if(!partner){
+    var mr=await sb.from('matches').select('*').eq('id',matchId).single();
+    if(mr.data){
+      var pid=mr.data.user1===me.id?mr.data.user2:mr.data.user1;
+      var pp=await sb.from('profiles').select('*').eq('id',pid).single();
+      partner=pp.data;
     }
   }
 
-  document.getElementById('chatPartnerName').textContent = partner?.name || '';
-  const avatarEl = document.getElementById('chatAvatar');
-  if (partner?.photo_url) {
-    avatarEl.innerHTML = '<img src="' + partner.photo_url + '" alt="">';
-  } else {
-    avatarEl.textContent = partner?.gender === '여성' ? '👩' : '👨';
-  }
+  document.getElementById('chatPartner').textContent=partner?(partner.nickname||partner.name||''):'';
+  var av=document.getElementById('chatAvatar');
+  if(partner&&partner.photo_url) av.innerHTML='<img src="'+partner.photo_url+'">';
+  else av.textContent=partner?(partner.gender==='여성'?'👩':'👨'):'👤';
 
   document.getElementById('chatroom').classList.add('visible');
-  document.getElementById('mainNav').style.display = 'none';
+  document.getElementById('mainNav').style.display='none';
 
-  await loadMessages();
+  await loadMsgs();
+  await sb.from('messages').update({is_read:true}).eq('match_id',matchId).neq('sender_id',me.id);
 
-  // 읽음 처리
-  await sb.from('messages')
-    .update({ is_read: true })
-    .eq('match_id', matchId)
-    .neq('sender_id', currentUser.id);
-
-  // 실시간 구독
-  if (realtimeChannel) sb.removeChannel(realtimeChannel);
-  realtimeChannel = sb.channel('chat-' + matchId)
-    .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages', filter:'match_id=eq.'+matchId }, payload => {
-      appendMessage(payload.new);
-      scrollToBottom();
+  if(rtCh) sb.removeChannel(rtCh);
+  rtCh=sb.channel('c-'+matchId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'match_id=eq.'+matchId},function(p){
+      appendMsg(p.new); scrollBottom();
     }).subscribe();
 }
 
-async function loadMessages() {
-  const { data: msgs } = await sb.from('messages')
-    .select('*').eq('match_id', currentMatchId)
-    .order('created_at', { ascending: true });
-
-  const container = document.getElementById('chatMessages');
-  container.innerHTML = '';
-  (msgs || []).forEach(m => appendMessage(m));
-  scrollToBottom();
+async function loadMsgs(){
+  var r=await sb.from('messages').select('*').eq('match_id',currentMatchId)
+    .order('created_at',{ascending:true});
+  var c=document.getElementById('chatMessages');
+  c.innerHTML='';
+  (r.data||[]).forEach(function(m){appendMsg(m);});
+  scrollBottom();
 }
 
-function appendMessage(msg) {
-  const isMine = msg.sender_id === currentUser.id;
-  const container = document.getElementById('chatMessages');
-  const wrap = document.createElement('div');
-  wrap.className = 'msg-wrap ' + (isMine ? 'mine' : '');
-  wrap.innerHTML =
-    '<div class="msg-bubble ' + (isMine ? 'mine' : 'theirs') + '">' + escH(msg.content) + '</div>' +
-    '<div class="msg-time">' + formatTime(msg.created_at) + '</div>';
-  container.appendChild(wrap);
+function appendMsg(m){
+  var mine=m.sender_id===me.id;
+  var c=document.getElementById('chatMessages');
+  var w=document.createElement('div');
+  w.className='mw'+(mine?' mine':'');
+  w.innerHTML='<div class="bub '+(mine?'mine':'theirs')+'">'+escH(m.content)+'</div>'
+             +'<div class="mt">'+formatTime(m.created_at)+'</div>';
+  c.appendChild(w);
 }
 
-async function sendMessage() {
-  const input = document.getElementById('chatInput');
-  const content = input.value.trim();
-  if (!content || !currentMatchId) return;
-  input.value = '';
-  input.style.height = 'auto';
-  await sb.from('messages').insert({
-    match_id: currentMatchId,
-    sender_id: currentUser.id,
-    content
-  });
+async function sendMsg(){
+  var ip=document.getElementById('chatInput');
+  var t=ip.value.trim();
+  if(!t||!currentMatchId) return;
+  ip.value=''; ip.style.height='auto';
+  await sb.from('messages').insert({match_id:currentMatchId,sender_id:me.id,content:t});
 }
 
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
+function hKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+
+function closeChat(){
+  document.getElementById('chatroom').classList.remove('visible');
+  document.getElementById('mainNav').style.display='flex';
+  if(rtCh) sb.removeChannel(rtCh);
+  loadMatches();
+  history.replaceState({},'','chat.html');
+}
+
+function scrollBottom(){
+  var el=document.getElementById('chatMessages');
+  setTimeout(function(){el.scrollTop=el.scrollHeight;},100);
+}
+
+function formatTime(ts){
+  var d=new Date(ts), now=new Date(), diff=now-d;
+  if(diff<60000) return '방금';
+  if(diff<3600000) return Math.floor(diff/60000)+'분 전';
+  if(diff<86400000) return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+  return (d.getMonth()+1)+'/'+d.getDate();
+}
+
+async function updateBadge(){
+  var lr=await sb.from('reactions').select('*',{count:'exact',head:true})
+    .eq('to_user',me.id).eq('action','like')
+    .gt('expires_at',new Date().toISOString());
+  if(lr.count>0){
+    var lb=document.getElementById('navLikeBadge');
+    lb.textContent=lr.count>9?'9+':lr.count;
+    lb.style.display='flex';
   }
 }
 
-function closeChat() {
-  document.getElementById('chatroom').classList.remove('visible');
-  document.getElementById('mainNav').style.display = 'flex';
-  if (realtimeChannel) sb.removeChannel(realtimeChannel);
-  loadMatches();
-}
-
-function scrollToBottom() {
-  const el = document.getElementById('chatMessages');
-  setTimeout(() => el.scrollTop = el.scrollHeight, 100);
-}
-
-function formatTime(ts) {
-  const d = new Date(ts);
-  const now = new Date();
-  const diff = now - d;
-  if (diff < 60000) return '방금';
-  if (diff < 3600000) return Math.floor(diff/60000) + '분 전';
-  if (diff < 86400000) return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
-  return (d.getMonth()+1) + '/' + d.getDate();
-}
-
-function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 init();
 </script>
