@@ -201,14 +201,14 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
 
 async function init() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
   currentUser = session.user;
   await loadProfile();
 }
 
 async function loadProfile() {
-  const { data: p } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+  const { data: p } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
   if (!p) return;
 
   document.getElementById('name').value = p.name || '';
@@ -247,13 +247,13 @@ async function uploadPhoto(input) {
   const ext = file.name.split('.').pop();
   const path = currentUser.id + '/avatar.' + ext;
 
-  const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+  const { error } = await sb.storage.from('avatars').upload(path, file, { upsert: true });
   if (error) { alert('사진 업로드 실패: ' + error.message); return; }
 
-  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  const { data } = sb.storage.from('avatars').getPublicUrl(path);
   const photoUrl = data.publicUrl + '?t=' + Date.now();
 
-  await supabase.from('profiles').update({ photo_url: photoUrl }).eq('id', currentUser.id);
+  await sb.from('profiles').update({ photo_url: photoUrl }).eq('id', currentUser.id);
 
   document.getElementById('photoImg').src = photoUrl;
   document.getElementById('photoImg').style.display = 'block';
@@ -280,7 +280,7 @@ async function saveProfile() {
     showMsg('이름과 성별은 필수예요', 'error'); return;
   }
 
-  const { error } = await supabase.from('profiles').update(updates).eq('id', currentUser.id);
+  const { error } = await sb.from('profiles').update(updates).eq('id', currentUser.id);
   if (error) { showMsg('저장 실패: ' + error.message, 'error'); return; }
 
   showMsg('저장됐어요 ✨', 'success');
@@ -295,7 +295,7 @@ function showMsg(text, type) {
 
 async function logout() {
   if (!confirm('로그아웃 할까요?')) return;
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   window.location.href = 'index.html';
 }
 
