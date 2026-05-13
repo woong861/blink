@@ -265,6 +265,8 @@ async function acceptLike(partnerId, name){
     });
     if(match){
       currentMatchId=match.id;
+      // 매칭 SMS 발송 (양쪽에)
+      sendMatchSMS(partnerId);
       document.getElementById('matchSub').textContent=name+'님과 서로 호감이 통했어요! 지금 바로 대화를 시작해보세요 💌';
       document.getElementById('matchBg').classList.add('on');
     } else {
@@ -308,6 +310,31 @@ async function updateBadges(){
 
 function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escAttr(s){return escH(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
+
+
+
+async function sendMatchSMS(partnerId){
+  try {
+    var pr = await sb.from('profiles').select('phone, nickname, name').eq('id', partnerId).single();
+    if(!pr.data || !pr.data.phone) return;
+
+    var mr = await sb.from('profiles').select('nickname, name').eq('id', me.id).single();
+    var myName = mr.data ? (mr.data.nickname || mr.data.name) : '상대방';
+
+    var smsText = '[Blink ✨] '+myName+'님과 매칭됐어요! 💕\n지금 채팅을 시작해보세요\nhttps://woong861.github.io/blink/chat.html';
+
+    await fetch(SB_URL + '/functions/v1/send-sms', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ to: pr.data.phone, text: smsText })
+    });
+  } catch(err) {
+    console.log('SMS 발송 실패:', err);
+  }
+}
 
 init();
 </script>
