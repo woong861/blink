@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Blink — 내 호감목록</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#FF6B9D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  :root {
+    --pink:#FF6B9D; --pink-light:#FFB3CC; --pink-pale:#FFF0F5;
+    --purple:#8B5CF6; --purple-light:#C4B5FD; --purple-pale:#F5F3FF;
+    --bg:#FFF8FC; --card-bg:#FFFFFF; --text:#1C0A16; --text-muted:#9B6B80;
+    --border:rgba(255,107,157,0.18); --shadow:0 8px 32px rgba(255,107,157,0.15);
+    --radius:20px; --radius-sm:12px; --nav-h:70px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Gowun Dodum',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);}
+  body::before{content:'';position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(255,107,157,0.07) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+  .header{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(255,248,252,0.95);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);}
+  .header-title{font-size:17px;font-weight:700;color:var(--text);}
+
+  .main{padding:76px 20px calc(var(--nav-h) + 20px);position:relative;z-index:1;}
+
+  /* 탭 */
+  .tabs{display:flex;background:rgba(255,107,157,0.08);border-radius:50px;padding:4px;margin-bottom:24px;}
+  .tab{flex:1;padding:10px;border:none;background:none;border-radius:50px;font-size:14px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .2s;font-family:'Gowun Dodum',sans-serif;}
+  .tab.active{background:white;color:var(--pink);box-shadow:0 2px 12px rgba(255,107,157,0.2);}
+
+  .loading-text{text-align:center;padding:40px;color:var(--text-muted);font-size:14px;}
+
+  /* 카드 리스트 */
+  .card-list{display:flex;flex-direction:column;gap:14px;}
+
+  .like-card{background:var(--card-bg);border-radius:var(--radius-sm);border:1px solid var(--border);display:flex;gap:14px;padding:14px;align-items:center;animation:fadeUp .3s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .like-card.matched{border-color:var(--pink-light);background:var(--pink-pale);}
+
+  .like-avatar{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--pink-light);flex-shrink:0;background:var(--pink-pale);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;}
+  .like-avatar img{width:56px;height:56px;border-radius:50%;object-fit:cover;}
+
+  .like-info{flex:1;min-width:0;}
+  .like-name{font-size:16px;font-weight:700;color:var(--text);margin-bottom:3px;font-family:'Noto Serif KR',serif;}
+  .like-school{font-size:12px;color:var(--text-muted);}
+  .like-status{font-size:12px;margin-top:4px;}
+  .like-status.matched{color:var(--pink);font-weight:600;}
+  .like-status.pending{color:var(--text-muted);}
+
+  .like-action{flex-shrink:0;}
+  .btn-chat{padding:8px 16px;border-radius:50px;border:none;background:linear-gradient(135deg,var(--pink),var(--purple));color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:'Gowun Dodum',sans-serif;}
+  .btn-pending{padding:8px 16px;border-radius:50px;border:1.5px solid var(--border);background:none;color:var(--text-muted);font-size:13px;font-family:'Gowun Dodum',sans-serif;}
+
+  /* 빈 상태 */
+  .empty{display:none;text-align:center;padding:60px 20px;}
+  .empty.visible{display:block;}
+  .empty-emoji{font-size:52px;margin-bottom:16px;}
+  .empty-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;}
+  .empty-sub{font-size:14px;color:var(--text-muted);line-height:1.6;}
+
+  /* 네비 */
+  .nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(255,248,252,0.97);backdrop-filter:blur(10px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom);z-index:100;}
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 16px;border:none;background:none;cursor:pointer;color:var(--text-muted);font-size:10px;font-family:'Gowun Dodum',sans-serif;}
+  .nav-item.active{color:var(--pink);}
+  .nav-icon{font-size:22px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">💗 호감 목록</div>
+</div>
+
+<div class="main">
+  <div class="tabs">
+    <button class="tab active" id="tabSent" onclick="switchTab('sent')">내가 보낸 💗</button>
+    <button class="tab" id="tabReceived" onclick="switchTab('received')">받은 💗</button>
+  </div>
+
+  <div id="loadingText" class="loading-text">불러오는 중...</div>
+  <div class="card-list" id="cardList"></div>
+  <div class="empty" id="emptyState">
+    <div class="empty-emoji">💌</div>
+    <div class="empty-title" id="emptyTitle">아직 호감을 보내지 않았어요</div>
+    <div class="empty-sub">카드를 둘러보고 마음에 드는 분에게<br>좋아요를 눌러보세요!</div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-item" onclick="location.href='home.html'"><span class="nav-icon">🏠</span><span>홈</span></button>
+  <button class="nav-item active" onclick="location.href='likes.html'"><span class="nav-icon">💗</span><span>호감</span></button>
+  <button class="nav-item" onclick="location.href='chat.html'"><span class="nav-icon">💬</span><span>채팅</span></button>
+  <button class="nav-item" onclick="location.href='profile.html'"><span class="nav-icon">👤</span><span>프로필</span></button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+var SB_URL = 'https://qnvmxvqqkazynsvjshvh.supabase.co';
+var SB_KEY = 'sb_publishable_b7UCSfhHt6LhJ15zZT1h7g_BxkdFIJv';
+var sb = supabase.createClient(SB_URL, SB_KEY);
+var currentUser = null;
+var currentTab = 'sent';
+
+async function init() {
+  var res = await sb.auth.getSession();
+  if (!res.data.session) { window.location.href = 'index.html'; return; }
+  currentUser = res.data.session.user;
+  loadData('sent');
+}
+
+async function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabSent').classList.toggle('active', tab === 'sent');
+  document.getElementById('tabReceived').classList.toggle('active', tab === 'received');
+  document.getElementById('emptyTitle').textContent = tab === 'sent' ? '아직 호감을 보내지 않았어요' : '아직 받은 호감이 없어요';
+  loadData(tab);
+}
+
+async function loadData(tab) {
+  document.getElementById('loadingText').style.display = 'block';
+  document.getElementById('cardList').innerHTML = '';
+  document.getElementById('emptyState').classList.remove('visible');
+
+  var reactions, profiles = [];
+
+  if (tab === 'sent') {
+    // 내가 보낸 좋아요
+    var r = await sb.from('reactions').select('*').eq('from_user', currentUser.id).eq('action', 'like').order('created_at', {ascending: false});
+    reactions = r.data || [];
+    for (var i = 0; i < reactions.length; i++) {
+      var p = await sb.from('profiles').select('*').eq('id', reactions[i].to_user).single();
+      if (p.data) profiles.push({reaction: reactions[i], profile: p.data});
+    }
+  } else {
+    // 받은 좋아요
+    var r2 = await sb.from('reactions').select('*').eq('to_user', currentUser.id).eq('action', 'like').order('created_at', {ascending: false});
+    reactions = r2.data || [];
+    for (var j = 0; j < reactions.length; j++) {
+      var p2 = await sb.from('profiles').select('*').eq('id', reactions[j].from_user).single();
+      if (p2.data) profiles.push({reaction: reactions[j], profile: p2.data});
+    }
+  }
+
+  document.getElementById('loadingText').style.display = 'none';
+
+  if (profiles.length === 0) {
+    document.getElementById('emptyState').classList.add('visible');
+    return;
+  }
+
+  // 매칭 목록 가져오기
+  var matchRes = await sb.from('matches').select('*')
+    .or('user1.eq.'+currentUser.id+',user2.eq.'+currentUser.id);
+  var matchedIds = (matchRes.data || []).map(function(m) {
+    return m.user1 === currentUser.id ? m.user2 : m.user1;
+  });
+  var matchMap = {};
+  (matchRes.data || []).forEach(function(m) {
+    var partnerId = m.user1 === currentUser.id ? m.user2 : m.user1;
+    matchMap[partnerId] = m.id;
+  });
+
+  var list = document.getElementById('cardList');
+  profiles.forEach(function(item, idx) {
+    var p = item.profile;
+    var isMatched = matchedIds.indexOf(p.id) !== -1;
+    var displayName = p.nickname || p.name || '익명';
+    var avatarHtml = p.photo_url
+      ? '<img src="'+p.photo_url+'" alt="">'
+      : (p.gender === '여성' ? '👩' : '👨');
+
+    var card = document.createElement('div');
+    card.className = 'like-card' + (isMatched ? ' matched' : '');
+    card.style.animationDelay = (idx * 0.05) + 's';
+    card.innerHTML =
+      '<div class="like-avatar">'+avatarHtml+'</div>'
+      + '<div class="like-info">'
+      + '<div class="like-name">'+escH(displayName)+'</div>'
+      + '<div class="like-school">🏫 '+escH(p.school||'')+(p.age?' · '+p.age+'살':'')+'</div>'
+      + '<div class="like-status '+(isMatched?'matched':'pending')+'">'
+      + (isMatched ? '💕 서로 매칭됐어요!' : '⏳ 상대방의 응답을 기다리는 중')
+      + '</div>'
+      + '</div>'
+      + '<div class="like-action">'
+      + (isMatched
+        ? '<button class="btn-chat" onclick="location.href=\'chat.html?match='+matchMap[p.id]+'\'">채팅 💬</button>'
+        : '<button class="btn-pending">대기 중</button>')
+      + '</div>';
+    list.appendChild(card);
+  });
+}
+
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+init();
+</script>
+</body>
+</html>
