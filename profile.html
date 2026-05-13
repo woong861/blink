@@ -212,6 +212,7 @@ async function loadProfile() {
   if (!p) return;
 
   document.getElementById('name').value = p.name || '';
+  document.getElementById('nickname').value = p.nickname || '';
   document.getElementById('gender').value = p.gender || '';
   document.getElementById('age').value = p.age || '';
   document.getElementById('insta').value = p.insta || '';
@@ -263,12 +264,13 @@ async function uploadPhoto(input) {
 async function saveProfile() {
   const updates = {
     name: document.getElementById('name').value.trim(),
+    nickname: document.getElementById('nickname').value.trim(),
     gender: document.getElementById('gender').value,
     age: parseInt(document.getElementById('age').value) || null,
     insta: document.getElementById('insta').value.trim(),
     school: document.getElementById('school').value.trim(),
     department: document.getElementById('department').value.trim(),
-    student_id: document.getElementById('studentId').value.trim(),
+
     intro_line: document.getElementById('introLine').value.trim(),
     bio: document.getElementById('bio').value.trim(),
     age_pref: document.getElementById('agePref').value,
