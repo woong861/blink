@@ -218,7 +218,7 @@ async function loadProfile() {
   document.getElementById('insta').value = p.insta || '';
   document.getElementById('school').value = p.school || '';
   document.getElementById('department').value = p.department || '';
-  document.getElementById('studentId').value = p.student_id || '';
+
   document.getElementById('introLine').value = p.intro_line || '';
   document.getElementById('bio').value = p.bio || '';
   document.getElementById('agePref').value = p.age_pref || '';
@@ -265,7 +265,6 @@ async function saveProfile() {
   const updates = {
     name: document.getElementById('name').value.trim(),
     nickname: document.getElementById('nickname').value.trim(),
-    gender: document.getElementById('gender').value,
     age: parseInt(document.getElementById('age').value) || null,
     insta: document.getElementById('insta').value.trim(),
     school: document.getElementById('school').value.trim(),
