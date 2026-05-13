@@ -232,13 +232,14 @@ async function doSignup() {
   var email = document.getElementById('signupEmail').value.trim();
   var pw = document.getElementById('signupPw').value;
   var name = document.getElementById('signupName').value.trim();
+  var nickname = document.getElementById('signupNickname').value.trim();
   var gender = document.getElementById('signupGender').value;
   var school = document.getElementById('signupSchool').value.trim();
   var dept = document.getElementById('signupDept').value.trim();
   var age = parseInt(document.getElementById('signupAge').value) || null;
   var btn = document.getElementById('signupBtn');
 
-  if (!email || !pw || !name || !gender || !school) {
+  if (!email || !pw || !name || !nickname || !gender || !school) {
     showMsg('signupMsg', '모든 항목을 입력해주세요', 'error'); return;
   }
   if (pw.length < 8) {
@@ -257,7 +258,7 @@ async function doSignup() {
 
   var profileRes = await sb.from('profiles').insert({
     id: res.data.user.id,
-    name: name, gender: gender, school: school,
+    name: name, nickname: nickname, gender: gender, school: school,
     department: dept, age: age, is_approved: false
   });
 
