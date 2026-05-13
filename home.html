@@ -240,12 +240,12 @@ document.getElementById('greetingDate').textContent =
 
 // 초기화
 async function init() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
   currentUser = session.user;
 
   // 내 프로필
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
   myProfile = profile;
   if (!myProfile) { window.location.href = 'profile.html'; return; }
 
@@ -258,11 +258,11 @@ async function loadCards() {
   const targetGender = myProfile.gender === '남성' ? '여성' : '남성';
 
   // 이미 반응한 유저 제외
-  const { data: reacted } = await supabase.from('reactions').select('to_user').eq('from_user', currentUser.id);
+  const { data: reacted } = await sb.from('reactions').select('to_user').eq('from_user', currentUser.id);
   const reactedIds = (reacted || []).map(r => r.to_user);
   reactedIds.push(currentUser.id);
 
-  let query = supabase.from('profiles')
+  let query = sb.from('profiles')
     .select('*')
     .eq('gender', targetGender)
     .eq('is_approved', true);
@@ -409,7 +409,7 @@ async function swipe(action) {
   }
 
   // DB에 반응 저장
-  const { error } = await supabase.from('reactions').insert({
+  const { error } = await sb.from('reactions').insert({
     from_user: currentUser.id,
     to_user: card.id,
     action: action === 'super' ? 'like' : action
@@ -417,7 +417,7 @@ async function swipe(action) {
 
   if (!error) {
     // 매칭 확인
-    const { data: match } = await supabase.from('matches')
+    const { data: match } = await sb.from('matches')
       .select('*')
       .or('user1.eq.' + currentUser.id + ',user2.eq.' + currentUser.id)
       .or('user1.eq.' + card.id + ',user2.eq.' + card.id)
@@ -451,7 +451,7 @@ function closeMatch() {
 
 // 안 읽은 메시지 확인
 async function checkUnreadMessages() {
-  const { count } = await supabase.from('messages')
+  const { count } = await sb.from('messages')
     .select('*', {count:'exact',head:true})
     .eq('is_read', false)
     .neq('sender_id', currentUser.id);
