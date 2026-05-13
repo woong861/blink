@@ -161,15 +161,10 @@
   </div>
 
   <div class="notice-box" id="noticeBox">
-    성별을 선택하면 상대방 프로필이 공개돼요 💌<br>
-    하루에 최대 <strong>4번</strong> 새로운 카드를 볼 수 있어요
+    오늘의 새로운 인연이 기다리고 있어요 💌
   </div>
 
-  <!-- 성별 버튼 -->
-  <div style="display:flex;gap:12px;margin-bottom:28px;">
-    <button onclick="selectGender('남성')" id="btnMale" style="flex:1;padding:14px;border-radius:50px;border:1.5px solid var(--purple-light);background:var(--purple-pale);color:var(--purple);font-size:15px;font-family:'Gowun Dodum',sans-serif;cursor:pointer;transition:all .25s;font-weight:600;">👨 남성입니다</button>
-    <button onclick="selectGender('여성')" id="btnFemale" style="flex:1;padding:14px;border-radius:50px;border:1.5px solid var(--pink-light);background:var(--pink-pale);color:var(--pink);font-size:15px;font-family:'Gowun Dodum',sans-serif;cursor:pointer;transition:all .25s;font-weight:600;">👩 여성입니다</button>
-  </div>
+
 
   <div class="loading-wrap" id="loadingWrap">
     <div class="loading-hearts"><div class="lh"></div><div class="lh"></div><div class="lh"></div></div>
@@ -209,6 +204,7 @@
 
 <div class="nav">
   <button class="nav-item active" onclick="location.href='home.html'"><span class="nav-icon">🏠</span><span>홈</span></button>
+  <button class="nav-item" onclick="location.href='likes.html'"><span class="nav-icon">💗</span><span>호감</span></button>
   <button class="nav-item" onclick="location.href='chat.html'"><span class="nav-icon">💬</span><span>채팅</span></button>
   <button class="nav-item" onclick="location.href='profile.html'"><span class="nav-icon">👤</span><span>프로필</span></button>
 </div>
@@ -236,24 +232,21 @@ async function init() {
   var pr = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
   myProfile = pr.data;
   if (!myProfile) { window.location.href = 'profile.html'; return; }
+
+  // 검토 중이면 카드 못 봄
+  if (!myProfile.is_approved) {
+    document.getElementById('noticeBox').innerHTML =
+      '⏳ 프로필 검토 중이에요!<br>승인 후 상대방 프로필을 볼 수 있어요 💌';
+    return;
+  }
+
+  // 자동으로 내 성별 기준 상대 성별 로드
+  currentGender = myProfile.gender;
+  loadCards();
   checkUnread();
 }
 
-async function selectGender(gender) {
-  currentGender = gender;
-  shownCount = 0;
-  allCards = [];
-
-  // 버튼 스타일
-  var bm = document.getElementById('btnMale');
-  var bf = document.getElementById('btnFemale');
-  if (gender === '남성') {
-    bm.style.background = 'var(--purple)'; bm.style.color = 'white'; bm.style.borderColor = 'var(--purple)';
-    bf.style.background = 'var(--pink-pale)'; bf.style.color = 'var(--pink)'; bf.style.borderColor = 'var(--pink-light)';
-  } else {
-    bf.style.background = 'var(--pink)'; bf.style.color = 'white'; bf.style.borderColor = 'var(--pink)';
-    bm.style.background = 'var(--purple-pale)'; bm.style.color = 'var(--purple)'; bm.style.borderColor = 'var(--purple-light)';
-  }
+async function loadCards() {
 
   clearCards();
   show('loadingWrap');
