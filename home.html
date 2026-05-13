@@ -421,6 +421,8 @@ async function doReact(toId,action,e){
   await sb.from('reactions').upsert({from_user:me.id,to_user:toId,action:action},{onConflict:'from_user,to_user'});
 
   if(action==='like'){
+    // 상대방에게 SMS 발송
+    sendLikeNotification(toId);
     // 매칭 확인
     var mr=await sb.from('matches').select('*')
       .or('user1.eq.'+me.id+'.and.user2.eq.'+toId+',user1.eq.'+toId+'.and.user2.eq.'+me.id)
@@ -455,6 +457,30 @@ async function checkUnread(){
 }
 
 function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+
+
+async function sendLikeNotification(toUserId){
+  try {
+    // 받은 사람 프로필 가져오기
+    var pr = await sb.from('profiles').select('phone, nickname, name').eq('id', toUserId).single();
+    if(!pr.data || !pr.data.phone) return;
+
+    var senderName = myProfile.nickname || myProfile.name || '누군가';
+    var smsText = '[Blink ✨] '+senderName+'님이 회원님에게 호감을 보냈어요! 💗\n앱에서 확인해보세요\nhttps://woong861.github.io/blink';
+
+    await fetch(SB_URL + '/functions/v1/send-sms', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ to: pr.data.phone, text: smsText })
+    });
+  } catch(err) {
+    console.log('SMS 발송 실패:', err);
+  }
+}
 
 init();
 </script>
