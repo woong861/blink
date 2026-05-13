@@ -122,7 +122,7 @@ let currentMatchId = null;
 let realtimeChannel = null;
 
 async function init() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location.href = 'index.html'; return; }
   currentUser = session.user;
 
@@ -135,7 +135,7 @@ async function init() {
 }
 
 async function loadMatches() {
-  const { data: matches } = await supabase.from('matches')
+  const { data: matches } = await sb.from('matches')
     .select('*')
     .or('user1.eq.' + currentUser.id + ',user2.eq.' + currentUser.id)
     .order('created_at', { ascending: false });
@@ -152,13 +152,13 @@ async function loadMatches() {
 
   for (const match of matches) {
     const partnerId = match.user1 === currentUser.id ? match.user2 : match.user1;
-    const { data: partner } = await supabase.from('profiles').select('*').eq('id', partnerId).single();
-    const { data: lastMsgs } = await supabase.from('messages')
+    const { data: partner } = await sb.from('profiles').select('*').eq('id', partnerId).single();
+    const { data: lastMsgs } = await sb.from('messages')
       .select('*').eq('match_id', match.id)
       .order('created_at', { ascending: false }).limit(1);
     const lastMsg = lastMsgs?.[0];
 
-    const { count: unread } = await supabase.from('messages')
+    const { count: unread } = await sb.from('messages')
       .select('*', { count:'exact', head:true })
       .eq('match_id', match.id).eq('is_read', false)
       .neq('sender_id', currentUser.id);
@@ -191,10 +191,10 @@ async function openChat(matchId, partner) {
 
   // 파트너 정보 로드
   if (!partner) {
-    const { data: match } = await supabase.from('matches').select('*').eq('id', matchId).single();
+    const { data: match } = await sb.from('matches').select('*').eq('id', matchId).single();
     if (match) {
       const partnerId = match.user1 === currentUser.id ? match.user2 : match.user1;
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', partnerId).single();
+      const { data: p } = await sb.from('profiles').select('*').eq('id', partnerId).single();
       partner = p;
     }
   }
@@ -213,14 +213,14 @@ async function openChat(matchId, partner) {
   await loadMessages();
 
   // 읽음 처리
-  await supabase.from('messages')
+  await sb.from('messages')
     .update({ is_read: true })
     .eq('match_id', matchId)
     .neq('sender_id', currentUser.id);
 
   // 실시간 구독
-  if (realtimeChannel) supabase.removeChannel(realtimeChannel);
-  realtimeChannel = supabase.channel('chat-' + matchId)
+  if (realtimeChannel) sb.removeChannel(realtimeChannel);
+  realtimeChannel = sb.channel('chat-' + matchId)
     .on('postgres_changes', { event:'INSERT', schema:'public', table:'messages', filter:'match_id=eq.'+matchId }, payload => {
       appendMessage(payload.new);
       scrollToBottom();
@@ -228,7 +228,7 @@ async function openChat(matchId, partner) {
 }
 
 async function loadMessages() {
-  const { data: msgs } = await supabase.from('messages')
+  const { data: msgs } = await sb.from('messages')
     .select('*').eq('match_id', currentMatchId)
     .order('created_at', { ascending: true });
 
@@ -255,7 +255,7 @@ async function sendMessage() {
   if (!content || !currentMatchId) return;
   input.value = '';
   input.style.height = 'auto';
-  await supabase.from('messages').insert({
+  await sb.from('messages').insert({
     match_id: currentMatchId,
     sender_id: currentUser.id,
     content
@@ -272,7 +272,7 @@ function handleKey(e) {
 function closeChat() {
   document.getElementById('chatroom').classList.remove('visible');
   document.getElementById('mainNav').style.display = 'flex';
-  if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+  if (realtimeChannel) sb.removeChannel(realtimeChannel);
   loadMatches();
 }
 
