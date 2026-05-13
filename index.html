@@ -7,9 +7,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="theme-color" content="#FF6B9D">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --pink:#FF6B9D; --pink-light:#FFB3CC; --pink-pale:#FFF0F5;
@@ -20,7 +20,7 @@
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
-    font-family: -apple-system, 'Gowun Dodum', sans-serif;
+    font-family: -apple-system, sans-serif;
     background: var(--bg);
     min-height: 100vh;
     display: flex;
@@ -43,10 +43,7 @@
     background:radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
     pointer-events:none;
   }
-
   .wrap { width:100%; max-width:400px; position:relative; z-index:1; }
-
-  /* 로고 */
   .logo-wrap { text-align:center; margin-bottom:40px; }
   .logo {
     font-size:48px; font-weight:800; letter-spacing:-2px;
@@ -55,8 +52,6 @@
     display:block; margin-bottom:6px;
   }
   .logo-sub { font-size:14px; color:var(--text-muted); letter-spacing:1px; }
-
-  /* 탭 */
   .tabs {
     display:flex; background:rgba(255,107,157,0.08);
     border-radius:50px; padding:4px; margin-bottom:28px;
@@ -70,8 +65,6 @@
     background:white; color:var(--pink);
     box-shadow:0 2px 12px rgba(255,107,157,0.2);
   }
-
-  /* 폼 */
   .form { display:flex; flex-direction:column; gap:14px; }
   .form-group { display:flex; flex-direction:column; gap:6px; }
   .form-label { font-size:13px; font-weight:600; color:var(--text-muted); padding-left:4px; }
@@ -79,113 +72,77 @@
     padding:14px 16px; border-radius:var(--radius-sm);
     border:1.5px solid var(--border); background:white;
     font-size:15px; color:var(--text); outline:none;
-    transition:all .2s; font-family:inherit;
+    transition:all .2s; font-family:inherit; width:100%;
   }
   .form-input:focus { border-color:var(--pink); box-shadow:0 0 0 3px rgba(255,107,157,0.1); }
   .form-input::placeholder { color:#CCC; }
-
   .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-
-  select.form-input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239B6B80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
-
-  /* 버튼 */
+  select.form-input {
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239B6B80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 14px center; padding-right:36px;
+  }
   .btn-primary {
     padding:15px; border-radius:50px; border:none;
     background:linear-gradient(135deg, var(--pink), var(--purple));
     color:white; font-size:16px; font-weight:700;
     cursor:pointer; transition:all .2s; margin-top:4px;
     box-shadow:0 6px 20px rgba(255,107,157,0.35);
-    font-family:inherit; letter-spacing:0.3px;
+    font-family:inherit; letter-spacing:0.3px; width:100%;
   }
   .btn-primary:active { transform:scale(0.98); }
   .btn-primary:disabled { opacity:0.6; cursor:not-allowed; }
-
-  /* 구분선 */
-  .divider {
-    display:flex; align-items:center; gap:12px;
-    margin:4px 0; color:var(--text-muted); font-size:13px;
-  }
-  .divider::before, .divider::after {
-    content:''; flex:1; height:1px; background:var(--border);
-  }
-
-  /* 소셜 로그인 */
-  .btn-social {
-    padding:13px; border-radius:var(--radius-sm);
-    border:1.5px solid var(--border); background:white;
-    font-size:14px; font-weight:600; color:var(--text);
-    cursor:pointer; transition:all .2s; display:flex;
-    align-items:center; justify-content:center; gap:10px;
-    font-family:inherit;
-  }
-  .btn-social:active { background:#f9f9f9; }
-
-  /* 메시지 */
   .msg { padding:12px 16px; border-radius:var(--radius-sm); font-size:13px; margin-top:4px; text-align:center; display:none; }
   .msg.error { background:#FFF0F0; color:#CC3333; border:1px solid #FFCCCC; display:block; }
   .msg.success { background:#F0FFF4; color:#1A7A3C; border:1px solid #B2F0C8; display:block; }
-
-  /* 패널 숨기기 */
   .panel { display:none; }
   .panel.active { display:flex; flex-direction:column; }
-
-  /* 약관 */
   .terms { font-size:12px; color:var(--text-muted); text-align:center; line-height:1.6; margin-top:8px; }
   .terms a { color:var(--pink); text-decoration:none; }
-
-  /* 로딩 스피너 */
-  .spinner {
-    width:20px; height:20px; border:2px solid rgba(255,255,255,0.4);
-    border-top-color:white; border-radius:50%;
-    animation:spin .6s linear infinite; display:inline-block;
-  }
+  .spinner { width:20px; height:20px; border:2px solid rgba(255,255,255,0.4); border-top-color:white; border-radius:50%; animation:spin .6s linear infinite; display:inline-block; vertical-align:middle; }
   @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
 <div class="wrap">
-
-  <!-- 로고 -->
   <div class="logo-wrap">
     <span class="logo">Blink ✨</span>
     <span class="logo-sub">설렘,스물 · 대학생 인연찾기</span>
   </div>
-
-  <!-- 탭 -->
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('login')">로그인</button>
-    <button class="tab" onclick="switchTab('signup')">회원가입</button>
+    <button class="tab active" id="tabLogin" onclick="switchTab('login')">로그인</button>
+    <button class="tab" id="tabSignup" onclick="switchTab('signup')">회원가입</button>
   </div>
 
-  <!-- 로그인 패널 -->
+  <!-- 로그인 -->
   <div id="loginPanel" class="panel active">
     <div class="form">
       <div class="form-group">
         <label class="form-label">이메일</label>
-        <input type="email" id="loginEmail" class="form-input" placeholder="이메일 입력" autocomplete="email">
+        <input type="email" id="loginEmail" class="form-input" placeholder="이메일 입력">
       </div>
       <div class="form-group">
         <label class="form-label">비밀번호</label>
-        <input type="password" id="loginPw" class="form-input" placeholder="비밀번호 입력" autocomplete="current-password">
+        <input type="password" id="loginPw" class="form-input" placeholder="비밀번호 입력">
       </div>
       <div id="loginMsg" class="msg"></div>
-      <button class="btn-primary" onclick="login()">로그인</button>
+      <button class="btn-primary" id="loginBtn" onclick="doLogin()">로그인</button>
     </div>
     <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:20px;">
-      비밀번호를 잊으셨나요? <a href="#" onclick="resetPw()" style="color:var(--pink);text-decoration:none;">재설정</a>
+      비밀번호를 잊으셨나요? <a href="#" onclick="doResetPw(); return false;" style="color:var(--pink);text-decoration:none;">재설정</a>
     </p>
   </div>
 
-  <!-- 회원가입 패널 -->
+  <!-- 회원가입 -->
   <div id="signupPanel" class="panel">
     <div class="form">
       <div class="form-group">
         <label class="form-label">이메일</label>
-        <input type="email" id="signupEmail" class="form-input" placeholder="이메일 입력" autocomplete="email">
+        <input type="email" id="signupEmail" class="form-input" placeholder="이메일 입력">
       </div>
       <div class="form-group">
         <label class="form-label">비밀번호</label>
-        <input type="password" id="signupPw" class="form-input" placeholder="8자 이상" autocomplete="new-password">
+        <input type="password" id="signupPw" class="form-input" placeholder="8자 이상">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -212,135 +169,116 @@
         </div>
         <div class="form-group">
           <label class="form-label">나이</label>
-          <input type="number" id="signupAge" class="form-input" placeholder="나이" min="18" max="30">
+          <input type="number" id="signupAge" class="form-input" placeholder="나이" min="18" max="35">
         </div>
       </div>
       <div id="signupMsg" class="msg"></div>
-      <button class="btn-primary" onclick="signup()">가입하기</button>
-      <p class="terms">가입하면 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하는 것으로 간주됩니다</p>
+      <button class="btn-primary" id="signupBtn" onclick="doSignup()">가입하기</button>
+      <p class="terms">가입하면 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의합니다</p>
     </div>
   </div>
-
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// Supabase 초기화
-const SUPABASE_URL = 'https://qnvmxvqqkazynsvjshvh.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_b7UCSfhHt6LhJ15zZT1h7g_BxkdFIJv';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var SB_URL = 'https://qnvmxvqqkazynsvjshvh.supabase.co';
+var SB_KEY = 'sb_publishable_b7UCSfhHt6LhJ15zZT1h7g_BxkdFIJv';
+var sb = supabase.createClient(SB_URL, SB_KEY);
 
 // 이미 로그인된 경우 홈으로
-supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session) window.location.href = 'home.html';
+sb.auth.getSession().then(function(res) {
+  if (res.data && res.data.session) {
+    window.location.href = 'home.html';
+  }
 });
 
-// 탭 전환
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
-  document.getElementById('loginPanel').classList.toggle('active', tab==='login');
-  document.getElementById('signupPanel').classList.toggle('active', tab==='signup');
+  if (tab === 'login') {
+    document.getElementById('tabLogin').classList.add('active');
+    document.getElementById('tabSignup').classList.remove('active');
+    document.getElementById('loginPanel').classList.add('active');
+    document.getElementById('signupPanel').classList.remove('active');
+  } else {
+    document.getElementById('tabSignup').classList.add('active');
+    document.getElementById('tabLogin').classList.remove('active');
+    document.getElementById('signupPanel').classList.add('active');
+    document.getElementById('loginPanel').classList.remove('active');
+  }
 }
 
-// 로그인
-async function login() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pw = document.getElementById('loginPw').value;
-  const msg = document.getElementById('loginMsg');
-  const btn = event.target;
+function showMsg(id, text, type) {
+  var el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + type;
+}
 
-  if (!email || !pw) { showMsg(msg, '이메일과 비밀번호를 입력해주세요', 'error'); return; }
-
+async function doLogin() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pw = document.getElementById('loginPw').value;
+  var btn = document.getElementById('loginBtn');
+  if (!email || !pw) { showMsg('loginMsg', '이메일과 비밀번호를 입력해주세요', 'error'); return; }
   btn.innerHTML = '<span class="spinner"></span>';
   btn.disabled = true;
-
-  const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
-
-  if (error) {
-    showMsg(msg, '이메일 또는 비밀번호가 올바르지 않아요', 'error');
-    btn.innerHTML = '로그인';
-    btn.disabled = false;
+  var res = await sb.auth.signInWithPassword({ email: email, password: pw });
+  if (res.error) {
+    showMsg('loginMsg', '이메일 또는 비밀번호가 올바르지 않아요', 'error');
+    btn.innerHTML = '로그인'; btn.disabled = false;
   } else {
     window.location.href = 'home.html';
   }
 }
 
-// 회원가입
-async function signup() {
-  const email = document.getElementById('signupEmail').value.trim();
-  const pw = document.getElementById('signupPw').value;
-  const name = document.getElementById('signupName').value.trim();
-  const gender = document.getElementById('signupGender').value;
-  const school = document.getElementById('signupSchool').value.trim();
-  const dept = document.getElementById('signupDept').value.trim();
-  const age = parseInt(document.getElementById('signupAge').value);
-  const msg = document.getElementById('signupMsg');
-  const btn = event.target;
+async function doSignup() {
+  var email = document.getElementById('signupEmail').value.trim();
+  var pw = document.getElementById('signupPw').value;
+  var name = document.getElementById('signupName').value.trim();
+  var gender = document.getElementById('signupGender').value;
+  var school = document.getElementById('signupSchool').value.trim();
+  var dept = document.getElementById('signupDept').value.trim();
+  var age = parseInt(document.getElementById('signupAge').value) || null;
+  var btn = document.getElementById('signupBtn');
 
   if (!email || !pw || !name || !gender || !school) {
-    showMsg(msg, '모든 항목을 입력해주세요', 'error'); return;
+    showMsg('signupMsg', '모든 항목을 입력해주세요', 'error'); return;
   }
   if (pw.length < 8) {
-    showMsg(msg, '비밀번호는 8자 이상이어야 해요', 'error'); return;
+    showMsg('signupMsg', '비밀번호는 8자 이상이어야 해요', 'error'); return;
   }
 
   btn.innerHTML = '<span class="spinner"></span>';
   btn.disabled = true;
 
-  const { data, error } = await supabase.auth.signUp({ email, password: pw });
-
-  if (error) {
-    showMsg(msg, error.message.includes('already') ? '이미 사용 중인 이메일이에요' : '가입 중 오류가 발생했어요', 'error');
-    btn.innerHTML = '가입하기';
-    btn.disabled = false;
+  var res = await sb.auth.signUp({ email: email, password: pw });
+  if (res.error) {
+    showMsg('signupMsg', res.error.message.includes('already') ? '이미 사용 중인 이메일이에요' : '가입 중 오류: ' + res.error.message, 'error');
+    btn.innerHTML = '가입하기'; btn.disabled = false;
     return;
   }
 
-  // 프로필 생성
-  const { error: profileError } = await supabase.from('profiles').insert({
-    id: data.user.id,
-    name, gender, school,
-    department: dept,
-    age: age || null,
-    is_approved: false
+  var profileRes = await sb.from('profiles').insert({
+    id: res.data.user.id,
+    name: name, gender: gender, school: school,
+    department: dept, age: age, is_approved: false
   });
 
-  if (profileError) {
-    showMsg(msg, '프로필 생성 중 오류가 발생했어요', 'error');
-    btn.innerHTML = '가입하기';
-    btn.disabled = false;
+  if (profileRes.error) {
+    showMsg('signupMsg', '프로필 생성 오류: ' + profileRes.error.message, 'error');
+    btn.innerHTML = '가입하기'; btn.disabled = false;
     return;
   }
 
-  showMsg(msg, '가입 완료! 이메일 인증 후 프로필을 완성해주세요 💌', 'success');
-  btn.innerHTML = '가입하기';
-  btn.disabled = false;
-
-  setTimeout(() => {
-    window.location.href = 'profile.html';
-  }, 2000);
+  showMsg('signupMsg', '가입 완료! 프로필을 완성해주세요 💌', 'success');
+  btn.innerHTML = '가입하기'; btn.disabled = false;
+  setTimeout(function() { window.location.href = 'profile.html'; }, 1500);
 }
 
-// 비밀번호 재설정
-async function resetPw() {
-  const email = document.getElementById('loginEmail').value.trim();
+async function doResetPw() {
+  var email = document.getElementById('loginEmail').value.trim();
   if (!email) { alert('이메일을 먼저 입력해주세요'); return; }
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
-  if (!error) alert('비밀번호 재설정 이메일을 보냈어요!');
+  var res = await sb.auth.resetPasswordForEmail(email);
+  if (!res.error) alert('비밀번호 재설정 이메일을 보냈어요!');
+  else alert('오류: ' + res.error.message);
 }
-
-function showMsg(el, text, type) {
-  el.textContent = text;
-  el.className = 'msg ' + type;
-}
-
-// 엔터키 처리
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const loginActive = document.getElementById('loginPanel').classList.contains('active');
-    if (loginActive) login();
-    else signup();
-  }
-});
 </script>
 </body>
 </html>
